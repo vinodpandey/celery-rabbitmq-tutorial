@@ -1,0 +1,8 @@
+
+
+# Flower
+CELERY_FLOWER_USER=debug
+CELERY_FLOWER_PASSWORD=debug
+
+
+BROKER_URL=amqp://user:password@rabbitmq:5672

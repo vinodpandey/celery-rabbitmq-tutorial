@@ -1,0 +1,44 @@
+version: '3'
+
+services:
+  server: &server
+    build:
+      context: .
+      dockerfile: ./compose/local/server/Dockerfile
+    image: vp_celery_tutorial_local_server
+    container_name: server
+    depends_on:
+      - rabbitmq
+    volumes:
+      - .:/app:z
+    env_file:
+      - ./.envs/.local/.server
+      - ./.envs/.local/.rabbitmq
+    command: /start
+
+  rabbitmq:
+    build:
+      context: .
+      dockerfile: ./compose/local/rabbitmq/Dockerfile
+    image: vp_celery_tutorial_rabbitmq
+    container_name: rabbitmq
+    env_file:
+      - ./.envs/.local/.rabbitmq
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+
+  celeryworker:
+    <<: *server
+    image: vp_celery_tutorial_celeryworker
+    container_name: celeryworker
+    ports: [ ]
+    command: /start-celeryworker
+
+  flower:
+    <<: *server
+    image: vp_celery_tutorial_flower
+    container_name: flower
+    ports:
+      - "5555:5555"
+    command: /start-flower

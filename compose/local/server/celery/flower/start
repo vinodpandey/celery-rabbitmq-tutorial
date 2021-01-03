@@ -1,0 +1,17 @@
+#!/bin/bash
+
+set -o errexit
+set -o nounset
+
+# waiting for celery workers to be ready before starting flower
+# https://github.com/mher/flower/issues/395
+# https://stackoverflow.com/questions/39107835/flower-doesnt-display-all-workers-for-celery/54570067#54570067
+
+until timeout 10 celery -A tasks inspect ping; do
+    >&2 echo "Celery workers not available"
+done
+
+celery flower \
+    --app=tasks \
+    --broker="${BROKER_URL}" \
+    --basic_auth="${CELERY_FLOWER_USER}:${CELERY_FLOWER_PASSWORD}"

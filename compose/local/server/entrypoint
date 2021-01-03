@@ -1,0 +1,39 @@
+#!/bin/bash
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+rabbitmq_ready() {
+python << END
+import sys
+import pika
+
+# setting amqp credentials
+credentials = pika.PlainCredentials("${RABBITMQ_DEFAULT_USER}", "${RABBITMQ_DEFAULT_PASS}")
+
+# setting amqp connection parameters
+parameters = pika.ConnectionParameters(
+    host="${RABBITMQ_HOST}",
+    port=${RABBITMQ_PORT},
+    virtual_host="${RABBITMQ_VHOST}",
+    credentials=credentials
+)
+
+try:
+    connection = pika.BlockingConnection(parameters)
+    if connection.is_open:
+        connection.close()
+        sys.exit(0)
+except Exception as error:
+    sys.exit(-1)
+
+END
+}
+until rabbitmq_ready; do
+  >&2 echo 'Waiting for RabbitMQ to become available...'
+  sleep 1
+done
+>&2 echo 'RabbitMQ is available'
+
+exec "$@"
